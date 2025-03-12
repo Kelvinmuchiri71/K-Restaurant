@@ -21,4 +21,12 @@ class Order(Base):
     customer = relationship("Customer", back_populates="orders")
     menu_items = relationship("Menu", secondary="order_items", back_populates="orders")
 
+    @property
+    def total_amount(self):
+        #Calculate the total cost of the order
+
+        return sum(item.price for item in self.menu_items)
+    
+    def __repr__(self):
+        return f"<Orrder {self.id}: {self.customer.name} - Total: KES {self.total_amount}>"
     
