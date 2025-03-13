@@ -3,12 +3,13 @@
 from sqlalchemy import Column, Integer, ForeignKey, Table
 from sqlalchemy.orm import relationship
 from app.base import Base
+from app.menu import Menu
 
 #Many-to-Many Association Table
 order_items = Table(
     "order_items", Base.metadata,
     Column("order_id", Integer, ForeignKey("orders.id"), primary_key=True),
-    Column("menu_id", Integer, ForeignKey("menu.id"), primary_key=True)
+    Column("menu_id", Integer, ForeignKey("menu_items.id"), primary_key=True)
 
 )
 
