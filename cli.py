@@ -66,4 +66,45 @@ def search_customer(name):
     for customer in customers:
         click.echo(customer)
 
+
+#order management
+@click.command()
+@click.option('--customer_id', prompt="Customer ID", type=int)
+@click.option('--menu_ids', prompt="Menu Item IDs (comma-separated)")
+
+def create_order(customer_id, menu_ids):
     
+    menu_ids = [int(id.strip()) for id in menu_ids.split(",")]
+    menu_items = session.query(Menu).filter(Menu.id.in_(menu_ids)).all()
+    
+    if not menu_items:
+        click.echo("No valid menu items found!")
+        return
+    
+    order = Order(customer_id=customer_id, menu_items=menu_items)
+    session.add(order)
+    session.commit()
+    click.echo(f"Order {order.id} created with {len(menu_items)} items - Total: KES {order.tatal_amount}")
+    
+@click.command()
+@click.option('--order_id', prompt="Order ID", type=int)
+
+def view_order_total(order_id):
+    order = session.query(Order).filter_by(id=order_id).first()
+    if order:
+        click.echo(f"Order {order.id} Total: KES {order.total_amount}")
+    else:
+        click.echo("Order not found!")
+        
+@click.command()
+@click.option('--order_id', propmt="Order ID", type=int)
+
+def delete_order(order_id)
+    order = session.query(Order).filter_by(id=order_id).first()
+    if order:
+        session.delete(order)
+        session.commit()
+        click.echo("Order deleted.")
+    else:
+        click.echo("Order not found!")
+
