@@ -2,13 +2,13 @@
 
 from sqlalchemy import Column, Integer, ForeignKey, Table
 from sqlalchemy.orm import relationship
-from .base import Base
+from app.base import Base
 
 #Many-to-Many Association Table
 order_items = Table(
     "order_items", Base.metadata,
-    Column("order_id", Integer, ForeignKey("order.id"), primary_key=True),
-    Column("menu_id", Integer, ForeignKey("menu_items.id"), primary_key=True)
+    Column("order_id", Integer, ForeignKey("orders.id"), primary_key=True),
+    Column("menu_id", Integer, ForeignKey("menu.id"), primary_key=True)
 
 )
 
@@ -23,8 +23,6 @@ class Order(Base):
 
     @property
     def total_amount(self):
-        #Calculate the total cost of the order
-
         return sum(item.price for item in self.menu_items)
     
     def __repr__(self):

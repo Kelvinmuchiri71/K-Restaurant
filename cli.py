@@ -97,9 +97,9 @@ def view_order_total(order_id):
         click.echo("Order not found!")
         
 @click.command()
-@click.option('--order_id', propmt="Order ID", type=int)
+@click.option('--order_id', prompt="Order ID", type=int)
 
-def delete_order(order_id)
+def delete_order(order_id):
     order = session.query(Order).filter_by(id=order_id).first()
     if order:
         session.delete(order)

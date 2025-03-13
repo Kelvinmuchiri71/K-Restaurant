@@ -2,7 +2,7 @@
 
 from sqlalchemy import Column, Integer, String, Float
 from sqlalchemy.orm import relationship
-from .base import Base
+from app.base import Base
 
 class Menu(Base):
     __tablename__ = "menu_items"

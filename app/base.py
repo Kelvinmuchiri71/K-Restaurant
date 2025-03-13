@@ -2,11 +2,12 @@
 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 
+DATABASE_URL = "sqlite:///restaurant.db"
 
-my_engine = create_engine("sqlite:///restaurant.db" , echo=True)
-Session = sessionmaker(bind=my_engine)
+engine = create_engine("sqlite:///restaurant.db" , echo=True)
+Session = sessionmaker(bind=engine)
 session = Session()
 
 Base = declarative_base()
