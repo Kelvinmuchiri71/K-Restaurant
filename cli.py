@@ -108,3 +108,18 @@ def delete_order(order_id)
     else:
         click.echo("Order not found!")
 
+
+cli.add_command(add_menu_item)
+cli.add_command(view_menu)
+cli.add_command(delete_menu_item)
+cli.add_command(add_customer)
+cli.add_command(view_customers)
+cli.add_command(search_customer)
+cli.add_command(create_order)
+cli.add_command(view_order_total)
+cli.add_command(delete_order)
+
+
+if __name__== '__main__':
+    cli()
+
