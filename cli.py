@@ -82,7 +82,7 @@ def view_menu():
         click.echo(item)
 
 @click.command()
-@click.option('--menu_id', prompt="Menu Item ID", type=int)
+@click.argument('menu_id', type=int)
 
 def delete_menu_item(menu_id):
 
@@ -94,13 +94,14 @@ def delete_menu_item(menu_id):
     else:
         click.echo("Menu item not found!")
 
+
 #customer management
 @click.command()
-@click.option('--name', prompt="Customer Name")
-@click.option('--phone', prompt="Phone Number")
+@click.argument('name')
+@click.argument('phone')
 
 def add_customer(name, phone):
-    customer = Customer(name=name, phone=phone)      #adding a new customer
+    customer = Customer(name=name, phone=phone)
     session.add(customer)
     session.commit()
     click.echo(f"Added {customer}")
@@ -113,7 +114,7 @@ def view_customers():
         click.echo(customer)
 
 @click.command()
-@click.option('--name', prompt="Customer Name")
+@click.argument('name')
 
 def search_customer(name):
     customers = session.query(Customer).filter(Customer.name.ilike(f"%{name}%")).all()
@@ -123,8 +124,8 @@ def search_customer(name):
 
 #order management
 @click.command()
-@click.option('--customer_id', prompt="Customer ID", type=int)
-@click.option('--menu_ids', prompt="Menu Item IDs (comma-separated)")
+@click.argument('customer_id', type=int)
+@click.argument('menu_ids')
 
 def create_order(customer_id, menu_ids):
     
@@ -141,7 +142,7 @@ def create_order(customer_id, menu_ids):
     click.echo(f"Order {order.id} created with {len(menu_items)} items - Total: KES {order.tatal_amount}")
     
 @click.command()
-@click.option('--order_id', prompt="Order ID", type=int)
+@click.argument('order_id', type=int)
 
 def view_order_total(order_id):
     order = session.query(Order).filter_by(id=order_id).first()
@@ -151,7 +152,7 @@ def view_order_total(order_id):
         click.echo("Order not found!")
         
 @click.command()
-@click.option('--order_id', prompt="Order ID", type=int)
+@click.argument('order_id', type=int)
 
 def delete_order(order_id):
     order = session.query(Order).filter_by(id=order_id).first()
@@ -163,6 +164,7 @@ def delete_order(order_id):
         click.echo("Order not found!")
 
 
+cli.add_command(interactive_menu)
 cli.add_command(add_menu_item)
 cli.add_command(view_menu)
 cli.add_command(delete_menu_item)
