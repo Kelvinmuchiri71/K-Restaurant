@@ -1,17 +1,19 @@
 #!/home/k/.pyenv/shims/python
 
 import click
-from app import session, Menu, Customer, Order
+from db import session
+from app import Menu, Customer, Order
+
 
 @click.group(invoke_without_command=True)
 @click.pass_context
 
 def cli(ctx):
     if ctx.invoked_subcommand is None:
-        interactive_menu()
+        interactive_menu(ctx)
 
 
-def interactive_menu():
+def interactive_menu(ctx):
     while True:
         click.echo("\n---  Welcome to K Restaurant ---")
         click.echo("1. Add Menu Item")
@@ -19,7 +21,7 @@ def interactive_menu():
         click.echo("3. Delete Menu Item")
         click.echo("4. Add Customer")
         click.echo("5. View Customers")
-        click.echo("6. Search Customer")
+        click.echo("6. Search Customer by ID")
         click.echo("7. Create Order")
         click.echo("8. View Order Total")
         click.echo("9. Delete Order")
@@ -43,8 +45,8 @@ def interactive_menu():
             ctx = click.Context(view_customers)
             ctx.invoke(view_customers)
         elif choice == 6:
-            ctx = click.Context(search_customer)
-            ctx.invoke(search_customer)
+            ctx = click.Context(search_customer_by_id)
+            ctx.invoke(search_customer_by_id)
         elif choice == 7:
             ctx = click.Context(create_order)
             ctx.invoke(create_order)
@@ -96,15 +98,16 @@ def view_menu():
 @click.command()
 @click.option('--menu_id', prompt="Menu Item ID", type=int)
 
-def delete_menu_item(menu_id):
-
-    menu_item = session.query(Menu).filter_by(id=menu_id).first()
-    if menu_item:
-        session.delete(menu_item)
-        session.commit()
-        click.echo("Menu item deleted.")
-    else:
-        click.echo("Menu item not found!")
+def delete_menu_item():
+    item_id = click.prompt("Enter the ID of the menu item to delete", type=int)
+    item_to_delete = session.query(Menu).filter(Menu.id == item_id).first()
+    if not item_to_delete:
+        click.echo("❌ Error: Menu item not found!")
+        return
+        
+    session.delete(item_to_delete)
+    session.commit()
+    click.echo(f"✅ Menu item with ID {item_id} deleted successfully!") 
 
 
 #customer management
@@ -113,10 +116,20 @@ def delete_menu_item(menu_id):
 @click.option('--phone', prompt="Phone Number")
 
 def add_customer(name, phone):
+    name = click.prompt("Enter Customer Name", type=str)
+    phone = click.prompt("Enter Phone Number", type=str)
+
+    if not name.strip():
+        click.echo("❌ Error: Name canot be empty.")
+        return
+    if not phone.strip():
+        click.echo("❌ Error: Phone number cannot be empty.")
+        return
+    
     customer = Customer(name=name, phone=phone)
     session.add(customer)
     session.commit()
-    click.echo(f"Added {customer}")
+    click.echo(f"✅ Customer '{name}' added successfully!")
 
 @click.command()
 
@@ -126,13 +139,18 @@ def view_customers():
         click.echo(customer)
 
 @click.command()
-@click.option('--name', prompt="Customer Name")
 
-def search_customer(name):
-    customers = session.query(Customer).filter(Customer.name.ilike(f"%{name}%")).all()
-    for customer in customers:
-        click.echo(customer)
+def search_customer_by_id():
+    customer_id = click.prompt("Enter Customer ID to search", type=int)
+    customer = session.query(Customer).filter_by(id=customer_id).first()
 
+    if customer:
+        click.echo("✅ Customer Found:")
+        click.echo(f"ID: {customer.id}")
+        click.echo(f"Name: {customer.name}")
+        click.echo(f"📞 Phone: {customer.phone}")
+    else:
+        click.echo("❌ No customer found with that ID.")
 
 #order management
 @click.command()
@@ -184,7 +202,7 @@ cli.add_command(view_menu)
 cli.add_command(delete_menu_item)
 cli.add_command(add_customer)
 cli.add_command(view_customers)
-cli.add_command(search_customer)
+cli.add_command(search_customer_by_id)
 cli.add_command(create_order)
 cli.add_command(view_order_total)
 cli.add_command(delete_order)
