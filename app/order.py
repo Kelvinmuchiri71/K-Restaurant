@@ -1,6 +1,6 @@
 #!/home/k/.pyenv/shims/python
 
-from sqlalchemy import Column, Integer, ForeignKey, Table
+from sqlalchemy import Column, Integer, ForeignKey, Table, String
 from sqlalchemy.orm import relationship
 from app.base import Base
 from app.menu import Menu
@@ -18,6 +18,7 @@ class Order(Base):
 
     id = Column(Integer, primary_key=True)
     customer_id = Column(Integer, ForeignKey("customers.id"))
+    status = Column(String, default="Waiting, Order")
 
     customer = relationship("Customer", back_populates="orders")
     menu_items = relationship("Menu", secondary="order_items", back_populates="orders")

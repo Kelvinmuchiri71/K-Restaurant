@@ -57,11 +57,21 @@ def interactive_menu(ctx):
             ctx = click.Context(delete_order)
             ctx.invoke(delete_order)
         elif choice == 0:
-            click.echo("Exiting...")
-            break
-        else:
-            click.echo("Invalid option, please try again.")
+            customer_name = None
 
+            last_served_order = session.query(Order).filter_by(status="served").order_by(Order.id.desc()).first()
+
+            if last_served_order:
+                customer = session.query(Customer). filter_by(id=last_served_order.customer_id).first()
+                if customer:
+                    customer_name = customer.name
+
+            if customer_name:
+                click.echo(f"🫂 Goodbye {customer_name}, Thank you for being our customer!🙂")
+            else:
+                click.echo("Exiting...")
+
+            break
 
 @click.command()
 @click.option('--name', prompt="Menu Name")
@@ -74,13 +84,13 @@ def add_menu_item(name, price, category):
     category = click.prompt("Enter category (e.g., Drink, Main Course)", type=str)
 
     if not name.strip():
-        click.echo("Erro: Name cannot be empty.")
+        click.echo("❌ Error: Name cannot be empty.")
         return
     if price <= 0:
-        click.echo("Error: Price must be greater than zero.")
+        click.echo("❌ Error: Price must be greater than zero.")
         return
     if not category.strip():
-        click.echo("Error: Category cannot be empty.")
+        click.echo("❌ Error: Category cannot be empty.")
         return
     
     menu_item = Menu(name=name, price=price, category=category.strip())
@@ -98,7 +108,7 @@ def view_menu():
 @click.command()
 @click.option('--menu_id', prompt="Menu Item ID", type=int)
 
-def delete_menu_item():
+def delete_menu_item(menu_id):
     item_id = click.prompt("Enter the ID of the menu item to delete", type=int)
     item_to_delete = session.query(Menu).filter(Menu.id == item_id).first()
     if not item_to_delete:
@@ -172,47 +182,102 @@ def create_order(customer_id, menu_items):
     menu_items = session.query(Menu).filter(Menu.name.in_(menu_names)).all()
     
     if not menu_items:
-        click.echo("❌ No valid menu items found!")
+        click.echo("❌ No valid menu items found! Order cannot be creted.")
         return
     
-    order = Order(customer_id=customer_id)
+    if len(menu_items) == 0:
+        click.echo("⚠️ Order cannot be empty! Please add at least one menu item.")
+        return
+    order = Order(customer_id=customer_id, status="pending")
     order.menu_items.extend(menu_items)
     session.add(order)
     session.commit()
+
 
     total_amount = sum(item.price for item in menu_items)
     menu_list = ','.join([item.name for item in menu_items])
     click.echo(f"✅ Welcome, {customer.name} Your Order for {menu_list} has been created - Total: KES {total_amount}")
     
 @click.command()
+@click.option('--order_id', prompt="Enter Order ID", type=int)
+def mark_order_served(order_id):
+    order = session.query(Order).filter_by(id=order_id).first()
+
+    if not order:
+        click.echo("❌ Order not found!")
+        return
+
+    if order.status != "paid":
+        click.echo("⚠️ Your Order must be PAID before it can be marked as SERVED!")
+        return
+
+    order.status = "served"
+    session.commit()
+    click.echo(f"✅ Your Order ID {order_id} has been marked as SERVED! 🍽️")
+
+@click.command()
 @click.option('--order_id', prompt="Order ID", type=int)
 
 def view_order_total(order_id):
     order_id = click.prompt("Enter Order ID", type=int)
-    #print(f"Checking order ID {order_id}")
+    print(f"Checking order ID {order_id}")
 
     order = session.query(Order).filter_by(id=order_id).first()
     if not order:
         click.echo("❌ Order not found!")
         return
     
+    customer = session.query(Customer).filter_by(id=order.customer_id).first()
+    if not customer:
+        click.echo("Customer not found!")
+        return
+    
+    menu_items = order.menu_items
+    if not menu_items:
+        click.echo("No items found in this order!")
+        return
+    
     menu_list = ','.join([item.name for item in order.menu_items])
+    order_status = "Served" if order.status == "served" else "Waiting"
     total_amount = sum(item.price for item in order.menu_items)
 
+    click.echo("\n--- Order Summary ---")
+    click.echo(f"Customer: {customer.name}")
+    click.echo(f"Food Items: {menu_list}")
+    click.echo(f"Status: {order_status}")
+    click.echo(f"Total: KES {total_amount}")
     click.echo(f"✅ Your Total Order for {menu_list} is KES: {total_amount}") 
+
+@click.command()
+@click.option('--order_id', prompt="Enter Order ID", type=int)
+def mark_order_paid(order_id):
+    order = session.query(Order).filter_by(id=order_id).first()
+
+    if not order:
+        click.echo("❌ Order not found!")
+        return
+
+    order.status = "paid"
+    session.commit()
+    click.echo(f"✅ Your Order ID {order_id} has been marked as PAID! 💰")
 
 @click.command()
 @click.option('--order_id', prompt="Order ID", type=int)
 
 def delete_order(order_id):
+    order_id = click.prompt("Enter Order ID", type=int)
     order = session.query(Order).filter_by(id=order_id).first()
-    if order:
-        order.menu_items = []
-        session.delete(order)
-        session.commit()
-        click.echo("Order deleted.")
-    else:
-        click.echo("Order not found!")
+
+    if not order:
+        click.echo("❌ Order not found!")
+        return
+    
+    table_no = order.customer_id
+
+    order.menu_items = []
+    session.delete(order)
+    session.commit()
+    click.echo(f"✅ Your Order ID {order_id} for Table No. {table_no} deleted successfully!")
 
 
 
@@ -223,7 +288,9 @@ cli.add_command(add_customer)
 cli.add_command(view_customers)
 cli.add_command(search_customer_by_id)
 cli.add_command(create_order)
+cli.add_command(mark_order_served)
 cli.add_command(view_order_total)
+cli.add_command(mark_order_paid)
 cli.add_command(delete_order)
 
 
