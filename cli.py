@@ -86,7 +86,7 @@ def add_menu_item(name, price, category):
     menu_item = Menu(name=name, price=price, category=category.strip())
     session.add(menu_item)
     session.commit()
-    click.echo(f"Menu item '{name}' added successfully!")
+    click.echo(f"✅ Menu item '{name}' added successfully!")
 
 @click.command()
 
@@ -132,7 +132,6 @@ def add_customer(name, phone):
     click.echo(f"✅ Customer '{name}' added successfully!")
 
 @click.command()
-
 def view_customers():
     customers = session.query(Customer).all()
     for customer in customers:
@@ -155,33 +154,53 @@ def search_customer_by_id():
 #order management
 @click.command()
 @click.option('--customer_id', prompt="Customer ID", type=int)
-@click.option('--menu_ids', prompt="Menu Item IDs (comma-separated)")
+@click.option('--menu_items', prompt="Menu Item Names (comma-separated)")
 
-def create_order(customer_id, menu_ids):
+def create_order(customer_id, menu_items):
+    customer_id = click.prompt("Enter Customer ID", type=int)
+    click.echo(f"🔍 Checking for Customer ID: {customer_id}")
+
+    customer = session.query(Customer).filter_by(id=customer_id).first()
+    if not customer:
+        click.echo("❌ Error: Customer ID not found.")
+        return
     
-    menu_ids = [int(id.strip()) for id in menu_ids.split(",")]
-    menu_items = session.query(Menu).filter(Menu.id.in_(menu_ids)).all()
+    click.echo(f"👋 Hello, {customer.name}")
+
+    menu_items = click.prompt("Enter Menu Item Names (comma-separated)", type=str)
+    menu_names = [name.strip() for name in menu_items.split(",")]
+    menu_items = session.query(Menu).filter(Menu.name.in_(menu_names)).all()
     
     if not menu_items:
-        click.echo("No valid menu items found!")
+        click.echo("❌ No valid menu items found!")
         return
     
     order = Order(customer_id=customer_id)
     order.menu_items.extend(menu_items)
     session.add(order)
     session.commit()
-    click.echo(f"Order {order.id} created with {len(menu_items)} items - Total: KES {order.total_amount}")
+
+    total_amount = sum(item.price for item in menu_items)
+    menu_list = ','.join([item.name for item in menu_items])
+    click.echo(f"✅ Welcome, {customer.name} Your Order for {menu_list} has been created - Total: KES {total_amount}")
     
 @click.command()
 @click.option('--order_id', prompt="Order ID", type=int)
 
 def view_order_total(order_id):
+    order_id = click.prompt("Enter Order ID", type=int)
+    #print(f"Checking order ID {order_id}")
+
     order = session.query(Order).filter_by(id=order_id).first()
-    if order:
-        click.echo(f"Order {order.id} Total: KES {order.total_amount}")
-    else:
-        click.echo("Order not found!")
-        
+    if not order:
+        click.echo("❌ Order not found!")
+        return
+    
+    menu_list = ','.join([item.name for item in order.menu_items])
+    total_amount = sum(item.price for item in order.menu_items)
+
+    click.echo(f"✅ Your Total Order for {menu_list} is KES: {total_amount}") 
+
 @click.command()
 @click.option('--order_id', prompt="Order ID", type=int)
 
