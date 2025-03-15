@@ -15,9 +15,9 @@ def seed_data():
 
 
     menu_items = [
-        Menu(name="Cheeseburger", price=300),
-        Menu(name="Pizza", price=1100),
-        Menu(name="Pasta", price=250)
+        Menu(name="Cheeseburger", price=300, category="Fast Food"),
+        Menu(name="Pizza", price=1100, category="Fast Food"),
+        Menu(name="Pasta", price=250, category="Italian")
     ]
     session.add_all(menu_items)
 

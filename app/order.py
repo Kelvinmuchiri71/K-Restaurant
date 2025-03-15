@@ -27,5 +27,5 @@ class Order(Base):
         return sum(item.price for item in self.menu_items)
     
     def __repr__(self):
-        return f"<Orrder {self.id}: {self.customer.name} - Total: KES {self.total_amount}>"
+        return f"<Order {self.id}: {self.customer.name} - Total: KES {self.total_amount}>"
     

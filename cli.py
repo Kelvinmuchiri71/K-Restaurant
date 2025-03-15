@@ -3,13 +3,13 @@
 import click
 from app import session, Menu, Customer, Order
 
-@click.group()
+@click.group(invoke_without_command=True)
+@click.pass_context
 
-def cli():
-    pass
+def cli(ctx):
+    if ctx.invoked_subcommand is None:
+        interactive_menu()
 
-#menu management
-@click.command()
 
 def interactive_menu():
     while True:
@@ -28,34 +28,32 @@ def interactive_menu():
         choice = click.prompt("Select an option", type=int)
 
         if choice == 1:
-            name = click.prompt("Menu Name")
-            price = click.prompt("Price", type=float)
-            category = click.prompt("Category")
-            add_menu_item(name, price, category)
+            ctx = click.Context(add_menu_item)
+            ctx.invoke(add_menu_item)
         elif choice == 2:
-            view_menu()
+            ctx = click.Context(view_menu)
+            ctx.invoke(view_menu)
         elif choice == 3:
-            menu_id = click.prompt("Menu Item ID", type=int)
-            delete_menu_item(menu_id)
+            ctx = click.Context(delete_menu_item)
+            ctx.invoke(delete_menu_item)
         elif choice == 4:
-            name = click.prompt("Customer Name")
-            phone = click.prompt("Phone Number")
-            add_customer(name, phone)
+            ctx = click.Context(add_customer)
+            ctx.invoke(add_customer)
         elif choice == 5:
-            view_customers()
+            ctx = click.Context(view_customers)
+            ctx.invoke(view_customers)
         elif choice == 6:
-            name = click.prompt("Customer Name")
-            search_customer(name)
+            ctx = click.Context(search_customer)
+            ctx.invoke(search_customer)
         elif choice == 7:
-            customer_id = click.prompt("Customer ID", type=int)
-            menu_ids = click.prompt("Menu Item IDs (comma-separated)")
-            create_order(customer_id, menu_ids)
+            ctx = click.Context(create_order)
+            ctx.invoke(create_order)
         elif choice == 8:
-            order_id = click.prompt("Order ID", type=int)
-            view_order_total(order_id)
+            ctx = click.Context(view_order_total)
+            ctx.invoke(view_order_total)
         elif choice == 9:
-            order_id = click.prompt("Order ID, type=int")
-            delete_order(order_id)
+            ctx = click.Context(delete_order)
+            ctx.invoke(delete_order)
         elif choice == 0:
             click.echo("Exiting...")
             break
@@ -64,15 +62,29 @@ def interactive_menu():
 
 
 @click.command()
-@click.argument('name')
-@click.argument('price', type=float)
-@click.argument('category')
+@click.option('--name', prompt="Menu Name")
+@click.option('--price', prompt="Price", type=float)
+@click.option('--category', prompt="Category")
 
 def add_menu_item(name, price, category):
-    menu_item = Menu(name=name, price=price, category=category)
+    name = click.prompt("Enter menu item name", type=str)
+    price = click.prompt("Enter price (KES)", type=float)
+    category = click.prompt("Enter category (e.g., Drink, Main Course)", type=str)
+
+    if not name.strip():
+        click.echo("Erro: Name cannot be empty.")
+        return
+    if price <= 0:
+        click.echo("Error: Price must be greater than zero.")
+        return
+    if not category.strip():
+        click.echo("Error: Category cannot be empty.")
+        return
+    
+    menu_item = Menu(name=name, price=price, category=category.strip())
     session.add(menu_item)
     session.commit()
-    click.echo(f"Added {menu_item}")
+    click.echo(f"Menu item '{name}' added successfully!")
 
 @click.command()
 
@@ -82,7 +94,7 @@ def view_menu():
         click.echo(item)
 
 @click.command()
-@click.argument('menu_id', type=int)
+@click.option('--menu_id', prompt="Menu Item ID", type=int)
 
 def delete_menu_item(menu_id):
 
@@ -97,8 +109,8 @@ def delete_menu_item(menu_id):
 
 #customer management
 @click.command()
-@click.argument('name')
-@click.argument('phone')
+@click.option('--name', prompt="Customer Name")
+@click.option('--phone', prompt="Phone Number")
 
 def add_customer(name, phone):
     customer = Customer(name=name, phone=phone)
@@ -114,7 +126,7 @@ def view_customers():
         click.echo(customer)
 
 @click.command()
-@click.argument('name')
+@click.option('--name', prompt="Customer Name")
 
 def search_customer(name):
     customers = session.query(Customer).filter(Customer.name.ilike(f"%{name}%")).all()
@@ -124,8 +136,8 @@ def search_customer(name):
 
 #order management
 @click.command()
-@click.argument('customer_id', type=int)
-@click.argument('menu_ids')
+@click.option('--customer_id', prompt="Customer ID", type=int)
+@click.option('--menu_ids', prompt="Menu Item IDs (comma-separated)")
 
 def create_order(customer_id, menu_ids):
     
@@ -136,13 +148,14 @@ def create_order(customer_id, menu_ids):
         click.echo("No valid menu items found!")
         return
     
-    order = Order(customer_id=customer_id, menu_items=menu_items)
+    order = Order(customer_id=customer_id)
+    order.menu_items.extend(menu_items)
     session.add(order)
     session.commit()
-    click.echo(f"Order {order.id} created with {len(menu_items)} items - Total: KES {order.tatal_amount}")
+    click.echo(f"Order {order.id} created with {len(menu_items)} items - Total: KES {order.total_amount}")
     
 @click.command()
-@click.argument('order_id', type=int)
+@click.option('--order_id', prompt="Order ID", type=int)
 
 def view_order_total(order_id):
     order = session.query(Order).filter_by(id=order_id).first()
@@ -152,11 +165,12 @@ def view_order_total(order_id):
         click.echo("Order not found!")
         
 @click.command()
-@click.argument('order_id', type=int)
+@click.option('--order_id', prompt="Order ID", type=int)
 
 def delete_order(order_id):
     order = session.query(Order).filter_by(id=order_id).first()
     if order:
+        order.menu_items = []
         session.delete(order)
         session.commit()
         click.echo("Order deleted.")
@@ -164,7 +178,7 @@ def delete_order(order_id):
         click.echo("Order not found!")
 
 
-cli.add_command(interactive_menu)
+
 cli.add_command(add_menu_item)
 cli.add_command(view_menu)
 cli.add_command(delete_menu_item)
