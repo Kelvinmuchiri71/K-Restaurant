@@ -13,7 +13,7 @@ def cli():
 
 def interactive_menu():
     while True:
-        click.echo("\n---  Restaurant Management System ---")
+        click.echo("\n---  Welcome to K Restaurant ---")
         click.echo("1. Add Menu Item")
         click.echo("2. View Menu")
         click.echo("3. Delete Menu Item")
