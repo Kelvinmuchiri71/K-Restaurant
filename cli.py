@@ -188,40 +188,27 @@ def create_order(customer_id, menu_items):
     if len(menu_items) == 0:
         click.echo("⚠️ Order cannot be empty! Please add at least one menu item.")
         return
-    order = Order(customer_id=customer_id, status="pending")
-    order.menu_items.extend(menu_items)
-    session.add(order)
-    session.commit()
-
-
-    total_amount = sum(item.price for item in menu_items)
-    menu_list = ','.join([item.name for item in menu_items])
-    click.echo(f"✅ Welcome, {customer.name} Your Order for {menu_list} has been created - Total: KES {total_amount}")
     
-@click.command()
-@click.option('--order_id', prompt="Enter Order ID", type=int)
-def mark_order_served(order_id):
-    order = session.query(Order).filter_by(id=order_id).first()
+    if menu_items:
+        order = Order(customer_id=customer_id, status="pending")
+        order.menu_items.extend(menu_items)
+        session.add(order)
+        session.commit()
 
-    if not order:
-        click.echo("❌ Order not found!")
-        return
 
-    if order.status != "paid":
-        click.echo("⚠️ Your Order must be PAID before it can be marked as SERVED!")
-        return
-
-    order.status = "served"
-    session.commit()
-    click.echo(f"✅ Your Order ID {order_id} has been marked as SERVED! 🍽️")
+        total_amount = sum(item.price for item in menu_items)
+        menu_list = ','.join([item.name for item in menu_items])
+        click.echo(f"✅ Welcome, {customer.name} Your Order for {menu_list} has been created - Total: KES {total_amount}")
+    else: 
+        click.echo("No valid menu items found! Order cannot be created.")
+    
 
 @click.command()
 @click.option('--order_id', prompt="Order ID", type=int)
 
 def view_order_total(order_id):
     order_id = click.prompt("Enter Order ID", type=int)
-    print(f"Checking order ID {order_id}")
-
+    click.echo(f"🔍 Checking order ID {order_id}")
     order = session.query(Order).filter_by(id=order_id).first()
     if not order:
         click.echo("❌ Order not found!")
@@ -248,18 +235,6 @@ def view_order_total(order_id):
     click.echo(f"Total: KES {total_amount}")
     click.echo(f"✅ Your Total Order for {menu_list} is KES: {total_amount}") 
 
-@click.command()
-@click.option('--order_id', prompt="Enter Order ID", type=int)
-def mark_order_paid(order_id):
-    order = session.query(Order).filter_by(id=order_id).first()
-
-    if not order:
-        click.echo("❌ Order not found!")
-        return
-
-    order.status = "paid"
-    session.commit()
-    click.echo(f"✅ Your Order ID {order_id} has been marked as PAID! 💰")
 
 @click.command()
 @click.option('--order_id', prompt="Order ID", type=int)
@@ -272,12 +247,10 @@ def delete_order(order_id):
         click.echo("❌ Order not found!")
         return
     
-    table_no = order.customer_id
-
-    order.menu_items = []
+    order.menu_items.clear()
     session.delete(order)
     session.commit()
-    click.echo(f"✅ Your Order ID {order_id} for Table No. {table_no} deleted successfully!")
+    click.echo(f"✅ Your Order ID {order_id} deleted successfully!")
 
 
 
@@ -288,9 +261,7 @@ cli.add_command(add_customer)
 cli.add_command(view_customers)
 cli.add_command(search_customer_by_id)
 cli.add_command(create_order)
-cli.add_command(mark_order_served)
 cli.add_command(view_order_total)
-cli.add_command(mark_order_paid)
 cli.add_command(delete_order)
 
 

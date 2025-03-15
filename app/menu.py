@@ -16,6 +16,3 @@ class Menu(Base):
 
     def __repr__(self):
         return f"<Menu {self.name} - KES {self.price}>"
-    
-
-

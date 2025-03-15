@@ -18,7 +18,7 @@ class Order(Base):
 
     id = Column(Integer, primary_key=True)
     customer_id = Column(Integer, ForeignKey("customers.id"))
-    status = Column(String, default="Waiting, Order")
+    status = Column(String, default="Waiting")
 
     customer = relationship("Customer", back_populates="orders")
     menu_items = relationship("Menu", secondary="order_items", back_populates="orders")
