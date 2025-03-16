@@ -154,9 +154,11 @@ def add_menu_item(name, price, category):
 @click.command()
 @click.option('--menu_id', prompt="Menu Item ID", type=int)
 def delete_menu_item(menu_id):
-    #item_id = click.prompt("Enter the ID of the menu item to delete", type=int)
-    item = session.query(Menu).filter_by(id ==menu_id).first()
-    if item:    
+    item = click.prompt("Enter the ID of the menu item to delete", type=int)
+    click.echo(f"🔍 Searching for Menu ID: {menu_id}")
+    item = session.query(Menu).filter(Menu.id == menu_id).first()
+    if item: 
+        click.echo(f"✅ Found menu item: {item.name}, Deleting...")   
         session.delete(item)
         session.commit()
         click.echo(f"✅ Menu item '{item.name}' deleted successfully!") 
@@ -177,6 +179,8 @@ def create_order(customer_id, table_number, menu_items):
         click.echo("❌ Error: Customer ID not found.")
         return
     
+    click.echo(f"👋 Hello, {customer.name}!")
+
     table_number = click.prompt("Enter Table Number", type=int)
 
     click.echo(f"👋 Hello, {customer.name}! Ur Table Number is {table_number}")
