@@ -3,7 +3,6 @@
 from sqlalchemy import Column, Integer, ForeignKey, Table, String
 from sqlalchemy.orm import relationship
 from app.base import Base
-from app.menu import Menu
 
 #Many-to-Many Association Table
 order_items = Table(
@@ -19,6 +18,7 @@ class Order(Base):
     id = Column(Integer, primary_key=True)
     customer_id = Column(Integer, ForeignKey("customers.id"))
     status = Column(String, default="Waiting")
+    table_number = Column(Integer, nullable=False)
 
     customer = relationship("Customer", back_populates="orders")
     menu_items = relationship("Menu", secondary="order_items", back_populates="orders")
@@ -28,5 +28,5 @@ class Order(Base):
         return sum(item.price for item in self.menu_items)
     
     def __repr__(self):
-        return f"<Order {self.id}: {self.customer.name} - Total: KES {self.total_amount}>"
+        return f"<Order {self.id}: Table {self.table_number} - {self.customer.name} - Total: KES {self.total_amount}>"
     
